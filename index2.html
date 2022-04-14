@@ -237,7 +237,23 @@
 <body>
   <div id="example1" />
   <script type="application/javascript">
-    let flows = ['Earth', 'Mars', 'Neptune', 'Jupiter', 'Saturn', 'Venus', 'Uranus', 'Mercury']
+    const param = new URLSearchParams(window.location.search).get('param')
+    let flows = []
+    const check = val => {
+      if(flows.indexOf(val) < 0) flows.push(val)
+    }
+    if(param) {
+      const params = param.split(',')
+      for(let val of params) {
+        if(val.indexOf('-') >= 0) {
+          const vals = val.split('-')
+          for(let each_val of vals) check(each_val)
+        } else if(val.indexOf(' ') >=0) {
+          const vals = val.split(' ')
+          for(let each_val of vals) check(each_val)
+        } else check(val)
+      }
+    }
 
     let source = name => {
       return context.metric((start, stop, step, callback) => {
@@ -245,7 +261,6 @@
           .then(res => res.json()).then(res => {
             let val = +res[name]
             let values = [val, val, val, val]
-            console.log(values)
             callback(null, values)
           })
       }, name)
@@ -256,6 +271,29 @@
         .clientDelay(0)
         .step(1e3)
         .size(960);
+
+    const sources = {}
+
+    for(let each_flow of flows) sources[each_flow] = source(each_flow)
+
+    const data = []
+
+    if(param) {
+      const params = param.split(',')
+      for(let val of params) {
+        if(val.indexOf('-') >= 0) {
+          const vals = val.split('-')
+          const source_one = sources[vals[0]]
+          const source_two = sources[vals[1]]
+          data.push(source_one.subtract(source_two))
+        } else if(val.indexOf(' ') >=0) {
+          const vals = val.split(' ')
+          const source_one = sources[vals[0]]
+          const source_two = sources[vals[1]]
+          data.push(source_one.add(source_two))
+        } else data.push(sources[val])
+      }
+    }
 
     let
       earth = source('Earth'),
@@ -271,8 +309,7 @@
           .call(context.axis().orient("top"));
 
       div.selectAll(".horizon")
-          //.data([foo, bar, foo.add(bar), foo.subtract(bar)])
-          .data([earth, mars, neptune, jupiter, earth.add(mars), neptune.subtract(jupiter)])
+          .data(data)
         .enter().append("div")
           .attr("class", "horizon")
           .call(context.horizon().height(120).extent([-20, 20]));
@@ -285,8 +322,6 @@
 
     // On mousemove, reposition the chart values to match the rule.
     context.on("focus", function(i) {
-      console.log('i', i)
-      console.log('size', context.size() - i)
       d3.selectAll(".value").style("left", i + "px");
     });
   </script>

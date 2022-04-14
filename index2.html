@@ -239,30 +239,12 @@
   <script type="application/javascript">
     let flows = ['Earth', 'Mars', 'Neptune', 'Jupiter', 'Saturn', 'Venus', 'Uranus', 'Mercury']
 
-    function random(name) {
-      var value = 0,
-          values = [],
-          i = 0,
-          last;
-      return context.metric(function(start, stop, step, callback) {
-        start = +start, stop = +stop;
-        if (isNaN(last)) last = start;
-        while (last < stop) {
-          last += step;
-          value = Math.max(-10, Math.min(10, value + .8 * Math.random() - .4 + .2 * Math.cos(i += .2)));
-          values.push(value);
-        }
-        values = values.slice((start - stop) / step)
-        callback(null, values);
-      }, name);
-    }
-
     let source = name => {
       return context.metric((start, stop, step, callback) => {
         fetch(`http://localhost:8080/metrics?ids=${name}`, {mode: 'cors'})
           .then(res => res.json()).then(res => {
             let val = +res[name]
-            let values = [val, val, val, val, val, val, val, val, val]
+            let values = [val, val, val, val]
             console.log(values)
             callback(null, values)
           })
@@ -275,10 +257,12 @@
         .step(1e3)
         .size(960);
 
-    var foo = random("foo"),
-        bar = random("bar");
-
-    let earth = source('Earth')
+    let
+      earth = source('Earth'),
+      mars = source('Mars'),
+      neptune = source('Neptune'),
+      jupiter = source('Jupiter')
+      
 
     d3.select("#example1").call(function(div) {
 
@@ -288,7 +272,7 @@
 
       div.selectAll(".horizon")
           //.data([foo, bar, foo.add(bar), foo.subtract(bar)])
-          .data([earth])
+          .data([earth, mars, neptune, jupiter, earth.add(mars), neptune.subtract(jupiter)])
         .enter().append("div")
           .attr("class", "horizon")
           .call(context.horizon().height(120).extent([-20, 20]));

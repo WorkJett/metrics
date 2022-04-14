@@ -146,7 +146,9 @@
             while ((date = d3.time.day.offset(date, 1)) < d[0]) values.push(value);
             values.push(value = (d[1] - compare) / compare);
           });
-          callback(null, values.slice(-context.size()));
+          const res =values.slice(-context.size())
+          console.log(res)
+          callback(null, res);
         });
       }, name);
     }

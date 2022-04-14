@@ -207,7 +207,7 @@
     .horizon .title,
     .horizon .value {
       bottom: 0;
-      line-height: 30px;
+      line-height: 200px;
       margin: 0 6px;
       position: absolute;
       text-shadow: 0 1px 0 rgba(255,255,255,.5);
@@ -227,6 +227,9 @@
       opacity: .2;
       z-index: 2;
     }
+    #example1 {
+      position: relative;
+    }
   </style>
   <script src="https://d3js.org/d3.v2.min.js" charset="utf-8"></script>
   <script src="https://square.github.io/cubism/cubism.v1.min.js"></script>
@@ -234,6 +237,8 @@
 <body>
   <div id="example1" />
   <script type="application/javascript">
+    let flows = ['Earth', 'Mars', 'Neptune', 'Jupiter', 'Saturn', 'Venus', 'Uranus', 'Mercury']
+
     function random(name) {
       var value = 0,
           values = [],
@@ -247,8 +252,21 @@
           value = Math.max(-10, Math.min(10, value + .8 * Math.random() - .4 + .2 * Math.cos(i += .2)));
           values.push(value);
         }
-        callback(null, values = values.slice((start - stop) / step));
+        values = values.slice((start - stop) / step)
+        callback(null, values);
       }, name);
+    }
+
+    let source = name => {
+      return context.metric((start, stop, step, callback) => {
+        fetch(`http://localhost:8080/metrics?ids=${name}`, {mode: 'cors'})
+          .then(res => res.json()).then(res => {
+            let val = +res[name]
+            let values = [val, val, val, val, val, val, val, val, val]
+            console.log(values)
+            callback(null, values)
+          })
+      }, name)
     }
 
     var context = cubism.context()
@@ -260,6 +278,8 @@
     var foo = random("foo"),
         bar = random("bar");
 
+    let earth = source('Earth')
+
     d3.select("#example1").call(function(div) {
 
       div.append("div")
@@ -267,10 +287,11 @@
           .call(context.axis().orient("top"));
 
       div.selectAll(".horizon")
-          .data([foo, bar, foo.add(bar), foo.subtract(bar)])
+          //.data([foo, bar, foo.add(bar), foo.subtract(bar)])
+          .data([earth])
         .enter().append("div")
           .attr("class", "horizon")
-          .call(context.horizon().extent([-20, 20]));
+          .call(context.horizon().height(120).extent([-20, 20]));
 
       div.append("div")
           .attr("class", "rule")
@@ -280,7 +301,9 @@
 
     // On mousemove, reposition the chart values to match the rule.
     context.on("focus", function(i) {
-      d3.selectAll(".value").style("right", i == null ? null : context.size() - i + "px");
+      console.log('i', i)
+      console.log('size', context.size() - i)
+      d3.selectAll(".value").style("left", i + "px");
     });
   </script>
 </body>

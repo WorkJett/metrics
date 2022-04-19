@@ -257,23 +257,12 @@
     let source = name => {
       return context.metric(function (start, stop, step, callback) {
         const values = []
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        values.push(Math.random() * 20 - 10)
-        callback(null, values)
-        //fetch(`http://localhost:8080/metrics?ids=${name}`, {mode: 'cors'})
-        //  .then(res => res.json()).then(res => {
-        //    let val = +res[name]
-        //    let values = [val, val, val, val]
-        //    callback(null, values)
-        //  })
+        fetch(`http://localhost:8080/metrics?ids=${name}`, {mode: 'cors'})
+          .then(res => res.json()).then(res => {
+            let val = +res[name]
+            let values = [val, val, val, val, val, val, val, val]
+            callback(null, values)
+          })
       }, name)
     }
 

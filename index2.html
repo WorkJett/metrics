@@ -237,27 +237,18 @@
   <div id="example1" />
   <script type="application/javascript">
     const param = new URLSearchParams(window.location.search).get('param')
+    console.log(param)
     let flows = []
     const check = val => {
       if(flows.indexOf(val) < 0) flows.push(val)
     }
-    if(param) {
-      const params = param.split(',')
-      for(let val of params) {
-        if(val.indexOf('-') >= 0) {
-          const vals = val.split('-')
-          for(let each_val of vals) check(each_val)
-        } else if(val.indexOf(' ') >=0) {
-          const vals = val.split(' ')
-          for(let each_val of vals) check(each_val)
-        } else check(val)
-      }
-    }
+    if(param) param.split(/,|\-|\s/).forEach(check)
 
     let source = name => {
       return context.metric(function (start, stop, step, callback) {
+        console.log((start - stop) / step)
         const values = []
-        fetch(`http://localhost:8080/metrics?ids=${name}`, {mode: 'cors'})
+        fetch(`https://horisont-metrics.herokuapp.com/metrics?ids=${name}`, {mode: 'cors'})
           .then(res => res.json()).then(res => {
             let val = +res[name]
             let values = [val, val, val, val, val, val, val, val]
@@ -279,28 +270,42 @@
     const data = []
 
     if(param) {
-      const params = param.split(',')
-      for(let val of params) {
-        if(val.indexOf('-') >= 0) {
-          const vals = val.split('-')
-          const source_one = sources[vals[0]]
-          const source_two = sources[vals[1]]
-          data.push(source_one.subtract(source_two))
-        } else if(val.indexOf(' ') >=0) {
-          const vals = val.split(' ')
-          const source_one = sources[vals[0]]
-          const source_two = sources[vals[1]]
-          data.push(source_one.add(source_two))
-        } else data.push(sources[val])
+      for(let val of param.split(',')) {
+        let cur_source = null
+        let obj = ""
+        let is_plus = false
+        let is_sub = false
+        for(let idx = 0; idx < val.length; idx++) {
+          let chr = val[idx]
+          if(chr === ' ') {
+            const src = sources[obj]
+            if(cur_source) {
+              if(is_plus) cur_source.add(src)
+              if(is_sub) cur_source.subtract(src)
+            } else cur_source = src
+            is_plus = true
+            is_sub = false
+            obj = ""
+          } else if(chr === '-') {
+            const src = sources[obj]
+            if(cur_source) {
+              if(is_plus) cur_source.add(src)
+              if(is_sub) cur_source.subtract(src)
+            } else cur_source = src
+            is_plus = false
+            is_sub = true
+            obj = ""
+          } else obj += chr
+        }
+        const src = sources[obj]
+        if(cur_source) {
+          if(is_plus) cur_source.add(src)
+          if(is_sub) cur_source.subtract(src)
+        } else cur_source = src
+
+        data.push(cur_source)
       }
     }
-
-    let
-      earth = source('Earth'),
-      mars = source('Mars'),
-      neptune = source('Neptune'),
-      jupiter = source('Jupiter')
-      
 
     d3.select("#example1").call(function(div) {
 

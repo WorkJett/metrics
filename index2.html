@@ -237,7 +237,6 @@
   <div id="example1" />
   <script type="application/javascript">
     const param = new URLSearchParams(window.location.search).get('param')
-    console.log(param)
     let flows = []
     const check = val => {
       if(flows.indexOf(val) < 0) flows.push(val)
@@ -246,12 +245,15 @@
 
     let source = name => {
       return context.metric(function (start, stop, step, callback) {
-        console.log((start - stop) / step)
         const values = []
         fetch(`https://horisont-metrics.herokuapp.com/metrics?ids=${name}`, {mode: 'cors'})
           .then(res => res.json()).then(res => {
             let val = +res[name]
-            let values = [val, val, val, val, val, val, val, val]
+            let steps = Math.abs((start - stop) / step)
+            if(steps > 20) steps = 7
+            let values = []
+            for(let i = 0; i < steps; i++) values.push(val)
+            values.push(val)
             callback(null, values)
           })
       }, name)
@@ -280,8 +282,8 @@
           if(chr === ' ') {
             const src = sources[obj]
             if(cur_source) {
-              if(is_plus) cur_source.add(src)
-              if(is_sub) cur_source.subtract(src)
+              if(is_plus) cur_source = cur_source.add(src)
+              if(is_sub) cur_source = cur_source.subtract(src)
             } else cur_source = src
             is_plus = true
             is_sub = false
@@ -289,8 +291,8 @@
           } else if(chr === '-') {
             const src = sources[obj]
             if(cur_source) {
-              if(is_plus) cur_source.add(src)
-              if(is_sub) cur_source.subtract(src)
+              if(is_plus) cur_source = cur_source.add(src)
+              if(is_sub) cur_source = cur_source.subtract(src)
             } else cur_source = src
             is_plus = false
             is_sub = true
@@ -299,8 +301,8 @@
         }
         const src = sources[obj]
         if(cur_source) {
-          if(is_plus) cur_source.add(src)
-          if(is_sub) cur_source.subtract(src)
+          if(is_plus) cur_source = cur_source.add(src)
+          if(is_sub) cur_source = cur_source.subtract(src)
         } else cur_source = src
 
         data.push(cur_source)

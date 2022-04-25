@@ -238,10 +238,32 @@
   <script type="application/javascript">
     const param = new URLSearchParams(window.location.search).get('param')
     let flows = []
+    let charts = []
+    let sum_charts = []
     const check = val => {
+      if(!val || val.length <= 0) return
       if(flows.indexOf(val) < 0) flows.push(val)
     }
-    if(param) param.split(/,|\-|\s/).forEach(check)
+    let singles = '' 
+    let matches = param.match(/\!SUM\!\([A-Za-z0-9-,_.]*\)/g)
+    if(matches && matches.length > 0) {
+      singles = param
+      for(let each_match of matches) {
+        singles = singles.replace(each_match, '')
+        let parts = each_match.replace('!SUM!(', '').replace(')', '').split(',')
+        parts.forEach(check)
+        sum_charts.push(parts.filter(part => part && part.length > 0))
+      }
+    } else {
+      singles = param
+    }
+
+    let single_parts = singles.split(',')
+    single_parts.forEach(check)
+    single_parts.forEach(part => {
+      if(part && part.length > 0) charts.push(part)
+      else charts.push(sum_charts.shift())
+    })
 
     let source = name => {
       return context.metric(function (start, stop, step, callback) {
@@ -271,43 +293,16 @@
 
     const data = []
 
-    if(param) {
-      for(let val of param.split(',')) {
-        let cur_source = null
-        let obj = ""
-        let is_plus = false
-        let is_sub = false
-        for(let idx = 0; idx < val.length; idx++) {
-          let chr = val[idx]
-          if(chr === ' ') {
-            const src = sources[obj]
-            if(cur_source) {
-              if(is_plus) cur_source = cur_source.add(src)
-              if(is_sub) cur_source = cur_source.subtract(src)
-            } else cur_source = src
-            is_plus = true
-            is_sub = false
-            obj = ""
-          } else if(chr === '-') {
-            const src = sources[obj]
-            if(cur_source) {
-              if(is_plus) cur_source = cur_source.add(src)
-              if(is_sub) cur_source = cur_source.subtract(src)
-            } else cur_source = src
-            is_plus = false
-            is_sub = true
-            obj = ""
-          } else obj += chr
-        }
-        const src = sources[obj]
-        if(cur_source) {
-          if(is_plus) cur_source = cur_source.add(src)
-          if(is_sub) cur_source = cur_source.subtract(src)
-        } else cur_source = src
-
-        data.push(cur_source)
-      }
-    }
+    charts.forEach(chart => {
+      let source = null
+      if(Array.isArray(chart)) {
+        chart.forEach(each_chart => {
+          if(!source) source = sources[each_chart]
+          else source = source.add(sources[each_chart])
+        })
+      } else source = sources[chart]
+      data.push(source)
+    })
 
     d3.select("#example1").call(function(div) {
 

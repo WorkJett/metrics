@@ -17,7 +17,6 @@
   <canvas id="chart_01"></canvas>
   <script type="application/javascript">
     const {random, ceil} = Math
-    const {log} = console
 
     const params = new URLSearchParams(window.location.search)
 
@@ -35,7 +34,7 @@
         labels: ids,
         datasets: [{
           label: 'Values',
-          data: ids.map(() => [gen_rnd_val(), gen_rnd_val()]),
+          data: ids.map(() => [0, 0]),
           backgroundColor: color
         }]
       }
@@ -50,6 +49,12 @@
           legend: {
             position: 'top',
           }
+        },
+        scales: {
+          y: {
+            min,
+            max
+          }
         }
       }
     }
@@ -59,10 +64,10 @@
       config
     )
 
-    setInterval(() => {
+    const interval_id = setInterval(() => {
       fetch(`https://horisont-metrics.herokuapp.com/metrics?ids=${ids_params}`, {mode: 'cors'})
         .then(res => res.json()).then(res => {
-          myChart.data.datasets[0].data = ids.map(id => [res[id].min, res[id].max])
+          myChart.data.datasets[0].data = ids.map(id => [res[id].val, res[id].max])
           myChart.update()
       })
     }, 1000)

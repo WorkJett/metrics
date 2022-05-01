@@ -25,7 +25,8 @@
     const min = parseInt(params.get('min') || "-100")
     const max = parseInt(params.get('max') || "100")
     const frame = parseInt(params.get('frame') || "1000")
-    const color = `#${params.get('color') || "5ea872"}`
+    const color1 = `#${params.get('color1') || "5ea872"}`
+    const color2 = `#${params.get('color2') || "cf91bd"}`
 
     const gen_rnd_val = () => ceil(random() * 200 - 100)
 
@@ -33,9 +34,13 @@
       return {
         labels: ids,
         datasets: [{
-          label: 'Values',
+          label: 'Range',
           data: ids.map(() => [0, 0]),
-          backgroundColor: color
+          backgroundColor: color1
+        }, {
+          label: 'Value',
+          data: ids.map(() => [0, 0]),
+          backgroundColor: color2
         }]
       }
     }
@@ -67,10 +72,11 @@
     const interval_id = setInterval(() => {
       fetch(`https://horisont-metrics.herokuapp.com/metrics?ids=${ids_params}`, {mode: 'cors'})
         .then(res => res.json()).then(res => {
-          myChart.data.datasets[0].data = ids.map(id => [res[id].val, res[id].max])
+          myChart.data.datasets[0].data = ids.map(id => [res[id].min, res[id].max])
+          myChart.data.datasets[1].data = ids.map(id => [0, res[id].val])
           myChart.update()
       })
-    }, 1000)
+    }, frame)
   </script>
 </body>
 </html>

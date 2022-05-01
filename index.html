@@ -55,6 +55,9 @@
             position: 'top',
           }
         },
+        animation: {
+          duration: 0
+        },
         scales: {
           y: {
             min,
@@ -69,12 +72,15 @@
       config
     )
 
+    const {log} = console
+
     const set_data = () => {
       fetch(`https://horisont-metrics.herokuapp.com/metrics?ids=${ids_params}`, {mode: 'cors'})
         .then(res => res.json()).then(res => {
           myChart.data.datasets[0].data = ids.map(id => [res[id].min, res[id].max])
           myChart.data.datasets[1].data = ids.map(id => [0, res[id].val])
           myChart.update()
+          log(myChart.data.datasets[0].data)
       })
     }
 

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Bars</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    #chart_01 {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="chart_01"></canvas>
+  <script type="application/javascript">
+    const {random, ceil} = Math
+
+    const params = new URLSearchParams(window.location.search)
+
+    const ids_params = params.get('ids')
+    const ids = ids_params.split(',')
+    const min = parseInt(params.get('min') || "-100")
+    const max = parseInt(params.get('max') || "100")
+    const frame = parseInt(params.get('frame') || "1000")
+    const color1 = `#${params.get('color1') || "5ea872"}`
+    const color2 = `#${params.get('color2') || "cf91bd"}`
+
+    const gen_rnd_val = () => ceil(random() * 200 - 100)
+
+    const init_data = () => {
+      return {
+        labels: ids,
+        datasets: [{
+          label: 'Range',
+          data: ids.map(() => [0, 0]),
+          backgroundColor: color1
+        }, {
+          label: 'Value',
+          data: ids.map(() => [0, 0]),
+          backgroundColor: color2
+        }]
+      }
+    }
+
+    const config = {
+      type: 'bar',
+      data: init_data(),
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          }
+        },
+        animation: {
+          duration: 0
+        },
+        scales: {
+          y: {
+            min,
+            max
+          }
+        }
+      }
+    }
+
+    const myChart = new Chart(
+      document.getElementById('chart_01'),
+      config
+    )
+
+    const {log} = console
+
+    const set_data = () => {
+      fetch(`https://horisont-metrics.herokuapp.com/range-metrics?ids=${ids_params}`, {mode: 'cors'})
+        .then(res => res.json()).then(res => {
+          myChart.data.datasets[0].data = ids.map(id => [res[id].min, res[id].max])
+          myChart.data.datasets[1].data = ids.map(id => [0, res[id].val])
+          myChart.update()
+          log(myChart.data.datasets[0].data)
+      })
+    }
+
+    const interval_id = setInterval(() => {
+      set_data()
+    }, frame)
+
+    set_data()
+  </script>
+</body>
+</html>

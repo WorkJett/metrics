@@ -219,7 +219,7 @@
 
     .horizon .value {
       right: 0;
-      font-size: 20px;
+      font-size: 40px;
       color: #8f1414;
     }
 
@@ -316,7 +316,7 @@
           .data(data)
         .enter().append("div")
           .attr("class", "horizon")
-          .call(context.horizon().height(120).extent([-20, 20]));
+          .call(context.horizon().height(120).extent([-60, 60]));
 
       div.append("div")
           .attr("class", "rule")

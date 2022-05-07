@@ -11,10 +11,24 @@
       width: 100vw;
       height: 100vh;
     }
+
+    .scale_btn {
+      position: absolute;
+      top: 8px;
+      left: 60px;
+      width: 24px;
+      height: 24px;
+    }
+
+    #mins_btn {
+      left: 96px;
+    }
   </style>
 </head>
 <body>
   <canvas id="chart_01"></canvas>
+  <button class="scale_btn" id="plus_btn">+</button>
+  <button class="scale_btn" id="mins_btn">-</button>
   <script type="application/javascript">
     const {random, ceil} = Math
 
@@ -22,8 +36,8 @@
 
     const ids_params = params.get('ids')
     const ids = ids_params.split(',')
-    const min = parseInt(params.get('min') || "-100")
-    const max = parseInt(params.get('max') || "100")
+    let min = parseInt(params.get('min') || "-100")
+    let max = parseInt(params.get('max') || "100")
     const frame = parseInt(params.get('frame') || "1000")
     const color1 = `#${params.get('color1') || "5ea872"}`
     const color2 = `#${params.get('color2') || "cf91bd"}`
@@ -59,6 +73,13 @@
           duration: 0
         },
         scales: {
+          x: {
+            position: {y: 0},
+            grid: {
+              borderColor: '#0b8c0b',
+              borderWidth: 2
+            }
+          },
           y: {
             min,
             max
@@ -89,6 +110,21 @@
     }, frame)
 
     set_data()
+
+    document.getElementById('plus_btn').addEventListener('click', () => {
+      max += 10
+      min -= 10
+      myChart.options.scales.y = {min, max}
+      myChart.update()
+    })
+
+    document.getElementById('mins_btn').addEventListener('click', () => {
+      if(max - min <= 20) return
+      max -= 10
+      min += 10
+      myChart.options.scales.y = {min, max}
+      myChart.update()
+    })
   </script>
 </body>
 </html>
